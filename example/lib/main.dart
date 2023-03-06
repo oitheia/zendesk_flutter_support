@@ -77,7 +77,7 @@ class _MyAppState extends State<MyApp> {
                 ZendeskFlutterCombination.initialize(
                    appId: "{zendeskApplicationId}",
                    clientId: "{zendeskMobileClientId}",
-                   nameIdentifier: "{customerNameIdentifieer}",
+                   userIdentity: "{customerNameIdentifieer}",
                    urlString: "{yourCompanyzendeskDomain}");
               },
               child: Text(

@@ -1,8 +1,8 @@
-
 import 'dart:async';
-import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+
 import 'zendesk_flutter_combination_platform_interface.dart';
 
 enum ZendeskMessagingMessageType {
@@ -22,9 +22,9 @@ class ZendeskMessagingObserver {
   ZendeskMessagingObserver(this.removeOnCall, this.func);
 }
 
-
 class ZendeskFlutterCombination {
-  static const MethodChannel _channel = MethodChannel('zendesk_flutter_combination');
+  static const MethodChannel _channel =
+      MethodChannel('zendesk_flutter_combination');
   static const channelMethodToMessageType = {
     "initialize_success": ZendeskMessagingMessageType.initializeSuccess,
     "initialize_failure": ZendeskMessagingMessageType.initializeFailure,
@@ -36,37 +36,42 @@ class ZendeskFlutterCombination {
   static Function(ZendeskMessagingMessageType type, Map? arguments)? _handler;
 
   /// Allow end-user to use local observer when calling some methods
-  static final Map<ZendeskMessagingMessageType, ZendeskMessagingObserver> _observers = {};
+  static final Map<ZendeskMessagingMessageType, ZendeskMessagingObserver>
+      _observers = {};
 
   Future<String?> getPlatformVersion() {
     return ZendeskFlutterCombinationPlatform.instance.getPlatformVersion();
   }
 
   /// Attach a global observer for incoming messages
-  static void setMessageHandler(Function(ZendeskMessagingMessageType type, Map? arguments)? handler) {
+  static void setMessageHandler(
+      Function(ZendeskMessagingMessageType type, Map? arguments)? handler) {
     _handler = handler;
   }
 
-  static Future<void> initialize({
-    required String urlString,
-    required String appId, required String clientId,required String nameIdentifier}) async {
+  static Future<void> initialize(
+      {required String urlString,
+      required String appId,
+      required String clientId,
+      required String userIdentity}) async {
     if (appId.isEmpty || clientId.isEmpty) {
       debugPrint('ZendeskMessaging - initialize - ids can not be empty');
       return;
     }
 
-    if (nameIdentifier.isEmpty) {
+    if (userIdentity.isEmpty) {
       debugPrint('ZendeskMessaging - initialize - name id can not be empty');
       return;
     }
 
     try {
-      _channel.setMethodCallHandler(_onMethodCall); // start observing channel messages
+      _channel.setMethodCallHandler(
+          _onMethodCall); // start observing channel messages
       await _channel.invokeMethod('initialize', {
         'urlString': urlString,
         'appId': appId,
         'clientId': clientId,
-        'nameIdentifier': nameIdentifier,
+        'userIdentity': userIdentity,
       });
     } catch (e) {
       debugPrint('ZendeskMessaging - initialize - Error: $e}');
@@ -97,13 +102,21 @@ class ZendeskFlutterCombination {
     }
   }
 
+  static Future<void> registerFcmTokenInZendesk(String token) async {
+    try {
+      await _channel.invokeMethod('registerFcmTokenInZendesk', {'token': token});
+    } catch (e) {
+      debugPrint('ZendeskMessaging - registerFcmTokenInZendesk - Error: $e}');
+    }
+  }
 
   static Future<dynamic> _onMethodCall(final MethodCall call) async {
     if (!channelMethodToMessageType.containsKey(call.method)) {
       return;
     }
 
-    final ZendeskMessagingMessageType type = channelMethodToMessageType[call.method]!;
+    final ZendeskMessagingMessageType type =
+        channelMethodToMessageType[call.method]!;
     var globalHandler = _handler;
     if (globalHandler != null) {
       globalHandler(type, call.arguments);
@@ -120,7 +133,9 @@ class ZendeskFlutterCombination {
   }
 
   /// Add an observer for a specific type
-  static _setObserver(ZendeskMessagingMessageType type, Function(Map? args)? func, {bool removeOnCall = true}) {
+  static _setObserver(
+      ZendeskMessagingMessageType type, Function(Map? args)? func,
+      {bool removeOnCall = true}) {
     if (func == null) {
       _observers.remove(type);
     } else {
